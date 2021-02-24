@@ -1,3 +1,8 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /node_log
+
 #hbase配置
 hbase:
   config:
@@ -13,4 +18,5 @@ hbase:
   time: 864000
 
 var:
-  log.path: /Users/chenghao/Desktop/log_test
+  #  log.path: /Users/chenghao/Desktop/log_test
+  log.path: /Users/chenghao/Desktop/node_test
