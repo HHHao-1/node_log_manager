@@ -10,17 +10,18 @@ import java.io.IOException;
 
 @SpringBootApplication
 public class NodeLogApplication {
-
-  @Resource private ParseLog parseLog;
-
+  
+  @Resource
+  private ParseLog parseLog;
+  
   private static NodeLogApplication nodeLogApplication;
-
+  
   @PostConstruct
   public void init() {
     nodeLogApplication = this;
     nodeLogApplication.parseLog = this.parseLog;
   }
-
+  
   public static void main(String[] args) {
     SpringApplication.run(NodeLogApplication.class, args);
     try {

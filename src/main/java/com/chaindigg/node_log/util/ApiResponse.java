@@ -1,6 +1,6 @@
 package com.chaindigg.node_log.util;
 
-import com.chaindigg.node_log.enums.State;
+import com.chaindigg.node_log.constant.ResponseStateEnum;
 import lombok.Data;
 
 @Data
@@ -10,7 +10,7 @@ public class ApiResponse {
   private String msg;
   private Object data;
 
-  public static ApiResponse create(State s, Object... t) {
+  public static ApiResponse create(ResponseStateEnum s, Object... t) {
     ApiResponse apiResponse = new ApiResponse();
     apiResponse.code = s.code;
     apiResponse.msg = s.message;
