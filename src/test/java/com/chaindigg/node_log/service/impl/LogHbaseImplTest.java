@@ -1,7 +1,7 @@
 package com.chaindigg.node_log.service.impl;
 
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,12 +32,14 @@ class LogHbaseImplTest extends NodeLogApplicationTests {
   }
 
   @Test
-  void batchGet() {
+  void batchGet() throws Exception {
     ArrayList<String> rowKeys = new ArrayList<>();
-    rowKeys.add("1");
-    rowKeys.add("3");
-    Map<String, LogEntity> stringLogEntityMap = logHbase.batchGet(rowKeys);
-    System.out.println(stringLogEntityMap.size());
+    rowKeys.add("ch");
+    rowKeys.add("ab");
+    List<LogEntity> stringLogEntityMap = null;
+    stringLogEntityMap = logHbase.batchGet(rowKeys);
+
+    System.out.println(stringLogEntityMap);
 
   }
 }

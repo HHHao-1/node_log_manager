@@ -2,6 +2,7 @@ package com.chaindigg.node_log.util.hbase;
 
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,9 +19,10 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.yarn.logaggregation.AggregatedLogFormat;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
@@ -38,7 +40,6 @@ import com.chaindigg.node_log.domain.EntityRowKeyMap;
 import com.chaindigg.node_log.domain.entity.LogEntity;
 import com.google.common.collect.Lists;
 
-import io.netty.channel.ConnectTimeoutException;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -355,6 +356,66 @@ public class HdoopUtils {
 
 	}
 
+	/**
+   * 批量模糊查询
+	 * @param <T>
+	 * @param tableName
+	 * @param txs
+	 * @param z
+	 * @param family
+	 * @return
+	 */
+	public <T> List<T> fuzzyScan(String tableName, List<String> txs, Class<T> z, String family)
+			throws Exception {
+		if (CollectionUtils.isEmpty(txs)) {
+			return new ArrayList<>();
+		}
+		if (conn == null) {
+			//初始化hbase连接
+			conn = hbaseUtils.getConnection();
+		}
+
+		ArrayList<T> resultList = new ArrayList<>();
+
+		try (Table table = conn.getTable(TableName.valueOf(tableName))) {
+			for (String tx : txs) {
+				Scan scan = new Scan();
+				scan.setStartRow(Bytes.toBytes(tx));
+				scan.setStopRow(Bytes.toBytes(tx+"|"));
+				try (ResultScanner scanner = table.getScanner(scan)){
+					for (Result result : scanner) {
+						if (result.getRow() == null) {
+							continue;
+						}
+						String rowKey = new String(result.getRow());
+						List<Cell> ceList = result.listCells();
+						if (ceList != null && ceList.size() > 0) {
+							T t = z.newInstance();
+							BeanWrapper beanWrapper = new BeanWrapperImpl(t);
+							beanWrapper.setAutoGrowNestedPaths(true);
+							for (Cell cell : ceList) {
+								// BeanWrapper beanWrapper = PropertyAccessorFactory.forBeanPropertyAccess(t);
+								String cellName = new String(CellUtil.cloneQualifier(cell));
+								String strValue = new String(CellUtil.cloneValue(cell));
+
+								String rowKeyValue = new String(CellUtil.cloneRow(cell));
+
+								beanWrapper.setPropertyValue(cellName, strValue);
+								beanWrapper.setPropertyValue("key",rowKeyValue);
+							}
+							resultList.add(t);
+						}
+					}
+				}
+			}
+			return resultList;
+		}
+	}
+
+
+
+
+
 	public List<Get> rowKey2Gets(List<String> rowkeys, byte[] bytes) {
 
 		List<Get> collect = rowkeys.stream().map(s -> {
@@ -430,6 +491,7 @@ public class HdoopUtils {
 		}
 		return resultMap;
 	}
+
 
 
 }

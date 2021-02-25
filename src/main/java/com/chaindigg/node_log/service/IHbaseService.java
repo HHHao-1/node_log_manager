@@ -1,13 +1,7 @@
 package com.chaindigg.node_log.service;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
-
-import com.chaindigg.node_log.domain.EntityRowKeyMap;
 import com.chaindigg.node_log.domain.entity.LogEntity;
 
 /**
@@ -25,9 +19,10 @@ public interface IHbaseService {
 	Object saveList(List<LogEntity> pojos) throws Exception;
 
 
-	Map<String, LogEntity> batchGet(List<String> rowKeys);
+	List<LogEntity> batchGet(List<String> rowKeys) throws Exception;
 
-	Map<String, LogEntity> batchGet(List<String> rowKeys, boolean reverseRowKey,String family);
+	List<LogEntity> batchGet(List<String> rowKeys, boolean reverseRowKey,String family)
+			throws Exception;
 
 	LogEntity get(String rowKey) throws Exception;
 
