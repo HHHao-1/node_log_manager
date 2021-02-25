@@ -7,7 +7,7 @@ server:
 hbase:
   config:
     #    hbase.zookeeper.quorum: hps13
-    hbase.zookeeper.quorum: bigdata2,bigdata3,bigdata4
+    hbase.zookeeper.quorum: bigdata1,bigdata2,bigdata3,bigdata4
     #    hbase.zookeeper.quorum: dn1
     hbase.zookeeper.property.clientPort: 2181
     hbase.ipc.server.max.callqueue.size: 1024 * 1024 * 1024
@@ -17,6 +17,12 @@ hbase:
     hbase.client.keyvalue.maxsize: -1 # keyvalue 最大值；-1不限制
   time: 864000
 
+data:
+  family: log
+  table: chenghao_ip_log
+  putSize: 100
+
 var:
   #  log.path: /Users/chenghao/Desktop/log_test
   log.path: /Users/chenghao/Desktop/node_test
+
