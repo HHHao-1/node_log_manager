@@ -73,8 +73,8 @@ public class ILogDataImpl implements ILogDataService {
                           + nodeName;
                   LogEntity logEntity = new LogEntity(rowKey, timestamp);
                   logEntities.add(logEntity);
-                  //                  }
                 }
+                //                }
               }
             }
             return FileVisitResult.CONTINUE;
@@ -114,10 +114,11 @@ public class ILogDataImpl implements ILogDataService {
   }
 
   @Override
-  @Scheduled(cron = "0 0 23 * * ?")
+  //  @Scheduled(cron = "0 0 5 * * ?")
+  @Scheduled(cron = "${var.cron.date}")
   public void schedule() {
     try {
-      LocalDateTime date = LocalDateTime.now();
+      LocalDateTime date = LocalDateTime.now().minusDays(1);
       saveList(date.toString().substring(0, date.toString().indexOf("T")));
     } catch (Exception e) {
       e.printStackTrace();
