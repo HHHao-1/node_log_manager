@@ -54,7 +54,7 @@ public class ILogDataImpl implements ILogDataService {
           @Override
           public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
               throws IOException {
-            if (!file.toString().contains(".DS_Store")) {
+            if (file.toString().contains(".log")) {
               String nodeName = file.getParent().getFileName().toString();
               try (Scanner sc = new Scanner(new FileReader(file.toString()))) {
                 //                for (int i = 0; i < 15; i++) {
@@ -74,9 +74,9 @@ public class ILogDataImpl implements ILogDataService {
                   LogEntity logEntity = new LogEntity(rowKey, timestamp);
                   logEntities.add(logEntity);
                 }
-                //                }
               }
             }
+            //            }
             return FileVisitResult.CONTINUE;
           }
         });
