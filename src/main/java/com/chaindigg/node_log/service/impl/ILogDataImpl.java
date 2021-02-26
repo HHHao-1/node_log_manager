@@ -15,17 +15,19 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Scanner;
 
 @Service
 public class ILogDataImpl implements ILogDataService {
-  
+
   @Value("${var.log.path}")
   private String logPath;
-  
-  @Resource
-  private IHbaseService hbaseService;
-  
+
+  @Resource private IHbaseService hbaseService;
+
   @Override
   public List<LogEntity> parse(String date) throws IOException {
     List<LogEntity> logEntities = new ArrayList<>();
@@ -42,7 +44,7 @@ public class ILogDataImpl implements ILogDataService {
     }
     return logEntities;
   }
-  
+
   private List<LogEntity> fileParse(File file) throws IOException {
     List<LogEntity> logEntities = new ArrayList<>();
     Files.walkFileTree(
@@ -55,26 +57,32 @@ public class ILogDataImpl implements ILogDataService {
             if (!file.toString().contains(".DS_Store")) {
               String nodeName = file.getParent().getFileName().toString();
               try (Scanner sc = new Scanner(new FileReader(file.toString()))) {
-                for (int i = 0; i < 10; i++) {
-                  if (sc.hasNextLine()) {
+//                for (int i = 0; i < 15; i++) {
+//                  if (sc.hasNextLine()) {
+                  while (sc.hasNextLine()) {
                     String line = sc.nextLine();
                     String ip = line.substring(line.indexOf("ip=") + 3, line.indexOf(","));
                     String txid = line.substring(line.indexOf("hash=") + 5);
                     String timestamp =
                         line.substring(line.indexOf("receivedtime=") + 13, line.indexOf("Z,") + 1);
-                    String rowKey = txid + Constans.HBASE_ROWKEY_SPLICE + ip + Constans.HBASE_ROWKEY_SPLICE + nodeName;
+                    String rowKey =
+                        txid
+                            + Constans.HBASE_ROWKEY_SPLICE
+                            + ip
+                            + Constans.HBASE_ROWKEY_SPLICE
+                            + nodeName;
                     LogEntity logEntity = new LogEntity(rowKey, timestamp);
                     logEntities.add(logEntity);
-                  }
-                }
+//                  }
+//                }
               }
             }
             return FileVisitResult.CONTINUE;
           }
-        });
-    return logEntities;
-  }
-  
+        })
+    return logEntities
+        }
+
   /***
    * 日志解析后数据存入hbase
    * @param date 格式例如: 2021-02-26
@@ -86,28 +94,25 @@ public class ILogDataImpl implements ILogDataService {
     if (date != null) {
       List<LogEntity> logEntities = parse(date);
       for (int i = 0; i < logEntities.size(); i++) {
-        if (getOne(logEntities.get(i).getKey()) != null) {
+        if (getOne(logEntities.get(i).getKey()) == null) {
           logSaveList.add(logEntities.get(i));
         }
       }
     }
     hbaseService.saveList(logSaveList);
   }
-  
+
   @Override
   public LogEntity getOne(String rowKey) throws Exception {
     return hbaseService.get(rowKey);
   }
-  
+
   @Override
-  public Map<String, LogEntity> batchGet(List<String> rowKeys) {
-    Map<String, LogEntity> map = hbaseService.batchGet(rowKeys);
-    map.forEach((k, v) -> {
-      v.setKey(k);
-    });
-    return map;
+  public List<LogEntity> batchGet(List<String> rowKeys) throws Exception {
+    List<LogEntity> list = hbaseService.fuzzyScan(rowKeys);
+    return list;
   }
-  
+
   @Override
   @Scheduled(cron = "0 0 23 * * ?")
   public void schedule() {
