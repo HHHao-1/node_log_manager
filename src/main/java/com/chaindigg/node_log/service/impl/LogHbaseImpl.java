@@ -62,15 +62,20 @@ public  class LogHbaseImpl implements IHbaseService {
 	}
 
 	@Override
-	public List<LogEntity> batchGet(List<String> rowKeys) throws Exception {
+	public List<LogEntity> fuzzyScan(List<String> rowKeys) throws Exception {
+			return fuzzyScan(rowKeys,false,family);
+	}
+	private List<LogEntity> fuzzyScan(List<String> rowKeys, boolean reverseRowKey, String family)
+			throws Exception {
+		return hdoopUtils.fuzzyScan(table, rowKeys, LogEntity.class, family);
+	}
+	@Override
+	public Map<String, LogEntity> batchGet(List<String> rowKeys) {
 			return batchGet(rowKeys,false,family);
 	}
 
-	@Override
-	public List<LogEntity> batchGet(List<String> rowKeys, boolean reverseRowKey, String family)
-			throws Exception {
-		// return hdoopUtils.parallelGet(table, rowKeys, LogEntity.class, family);
-			return hdoopUtils.fuzzyScan(table, rowKeys, LogEntity.class, family);
+	private Map<String, LogEntity> batchGet(List<String> rowKeys, boolean reverseRowKey, String family) {
+		return hdoopUtils.parallelGet(table, rowKeys, LogEntity.class, family);
 	}
 
 	private String[] getFamilies() {

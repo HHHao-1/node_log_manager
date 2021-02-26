@@ -32,14 +32,23 @@ class LogHbaseImplTest extends NodeLogApplicationTests {
   }
 
   @Test
-  void batchGet() throws Exception {
+  void fuzzyScan() throws Exception {
     ArrayList<String> rowKeys = new ArrayList<>();
     rowKeys.add("ch");
     rowKeys.add("ab");
     List<LogEntity> stringLogEntityMap = null;
-    stringLogEntityMap = logHbase.batchGet(rowKeys);
+    stringLogEntityMap = logHbase.fuzzyScan(rowKeys);
 
     System.out.println(stringLogEntityMap);
+  }
+    @Test
+  void batchGet() throws Exception {
+    ArrayList<String> rowKeys = new ArrayList<>();
+    rowKeys.add("ch1");
+    rowKeys.add("ab");
+      System.out.println(logHbase.batchGet(rowKeys));
 
   }
+
+
 }

@@ -1,6 +1,7 @@
 package com.chaindigg.node_log.service;
 
 import java.util.List;
+import java.util.Map;
 
 import com.chaindigg.node_log.domain.entity.LogEntity;
 
@@ -19,10 +20,10 @@ public interface IHbaseService {
 	Object saveList(List<LogEntity> pojos) throws Exception;
 
 
-	List<LogEntity> batchGet(List<String> rowKeys) throws Exception;
+	List<LogEntity> fuzzyScan(List<String> rowKeys) throws Exception;
 
-	List<LogEntity> batchGet(List<String> rowKeys, boolean reverseRowKey,String family)
-			throws Exception;
+	Map<String, LogEntity> batchGet(List<String> rowKeys);
+
 
 	LogEntity get(String rowKey) throws Exception;
 

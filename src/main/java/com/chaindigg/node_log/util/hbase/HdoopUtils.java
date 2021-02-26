@@ -484,7 +484,10 @@ public class HdoopUtils {
 					String cellName = new String(CellUtil.cloneQualifier(cell));
 					String strValue = new String(CellUtil.cloneValue(cell));
 
-						beanWrapper.setPropertyValue(cellName, strValue);
+					String rowKeyValue = new String(CellUtil.cloneRow(cell));
+
+					beanWrapper.setPropertyValue(cellName, strValue);
+					beanWrapper.setPropertyValue("key",rowKeyValue);
 				}
 				resultMap.put(rowKey, t);
 			}
