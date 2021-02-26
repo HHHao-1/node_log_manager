@@ -57,31 +57,31 @@ public class ILogDataImpl implements ILogDataService {
             if (!file.toString().contains(".DS_Store")) {
               String nodeName = file.getParent().getFileName().toString();
               try (Scanner sc = new Scanner(new FileReader(file.toString()))) {
-//                for (int i = 0; i < 15; i++) {
-//                  if (sc.hasNextLine()) {
-                  while (sc.hasNextLine()) {
-                    String line = sc.nextLine();
-                    String ip = line.substring(line.indexOf("ip=") + 3, line.indexOf(","));
-                    String txid = line.substring(line.indexOf("hash=") + 5);
-                    String timestamp =
-                        line.substring(line.indexOf("receivedtime=") + 13, line.indexOf("Z,") + 1);
-                    String rowKey =
-                        txid
-                            + Constans.HBASE_ROWKEY_SPLICE
-                            + ip
-                            + Constans.HBASE_ROWKEY_SPLICE
-                            + nodeName;
-                    LogEntity logEntity = new LogEntity(rowKey, timestamp);
-                    logEntities.add(logEntity);
-//                  }
-//                }
+                //                for (int i = 0; i < 15; i++) {
+                //                  if (sc.hasNextLine()) {
+                while (sc.hasNextLine()) {
+                  String line = sc.nextLine();
+                  String ip = line.substring(line.indexOf("ip=") + 3, line.indexOf(","));
+                  String txid = line.substring(line.indexOf("hash=") + 5);
+                  String timestamp =
+                      line.substring(line.indexOf("receivedtime=") + 13, line.indexOf("Z,") + 1);
+                  String rowKey =
+                      txid
+                          + Constans.HBASE_ROWKEY_SPLICE
+                          + ip
+                          + Constans.HBASE_ROWKEY_SPLICE
+                          + nodeName;
+                  LogEntity logEntity = new LogEntity(rowKey, timestamp);
+                  logEntities.add(logEntity);
+                  //                  }
+                }
               }
             }
             return FileVisitResult.CONTINUE;
           }
-        })
-    return logEntities
-        }
+        });
+    return logEntities;
+  }
 
   /***
    * 日志解析后数据存入hbase
