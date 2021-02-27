@@ -57,11 +57,7 @@ public class LogDataImpl implements ILogDataService {
               throws IOException {
             if (file.toString().contains(".log")) {
               String nodeName = file.getParent().getFileName().toString();
-              //              try (Scanner sc = new Scanner(new FileReader(file.toString()))) {
               try (Stream<String> lines = Files.lines(file)) {
-                //                for (int i = 0; i < 15; i++) {
-                //                  if (sc.hasNextLine()) {
-                //                while (sc.hasNextLine()) {
                 lines.collect(
                     Collectors.toMap(
                         k -> {
@@ -72,18 +68,8 @@ public class LogDataImpl implements ILogDataService {
                         v -> v.substring(v.indexOf("receivedtime=") + 13, v.indexOf("Z,") + 1),
                         (oldVal, currVal) -> oldVal))
                     .forEach((k, v) -> logEntities.add(new LogEntity(k, v)));
-
-//                String line = sc.nextLine();
-//                String ip = line.substring(line.indexOf("ip=") + 3, line.indexOf(","));
-//                String txid = line.substring(line.indexOf("hash=") + 5);
-//                String timestamp = line.substring(line.indexOf("receivedtime=") + 13, line.indexOf("Z,") + 1);
-//                String rowKey = txid + Constans.ROWKEY_SPLICE + ip + Constans.ROWKEY_SPLICE + nodeName;
-//                LogEntity logEntity = new LogEntity(rowKey, timestamp);
-//                logEntities.add(logEntity);
-                //                }
               }
             }
-            //            }
             return FileVisitResult.CONTINUE;
           }
         });
@@ -97,23 +83,13 @@ public class LogDataImpl implements ILogDataService {
    */
   @Override
   public void saveList(String date) throws Exception {
-//    List<LogEntity> logSaveList = new ArrayList<>();
     if (date == null || date.equals("")) {
       return;
     }
     List<LogEntity> logEntities = parse(date);
-//    if (date != null) {
     List<String> rowKey = new ArrayList<>();
-//      List<LogEntity> logEntities = parse(date);
     logEntities.forEach(s -> rowKey.add(s.getKey()));
-//      Map<String, LogEntity> existedLogData = hbaseService.batchGet(rowKey);
     logEntities.removeAll(hbaseService.batchGet(rowKey).values());
-//      for (int i = 0; i < logEntities.size(); i++) {
-//        if (getOne(logEntities.get(i).getKey()) == null) {
-//          logSaveList.add(logEntities.get(i));
-//        }
-//      }
-//    }
     hbaseService.saveList(logEntities);
   }
   

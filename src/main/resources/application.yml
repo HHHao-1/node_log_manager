@@ -26,6 +26,6 @@ var:
   log.path: /Users/chenghao/Desktop/log_test
   cron.date: '0 0 5 * * ?'
   #  cron.date: '* * * * * ?'
-#  log.path: /Users/chenghao/Desktop/node_test
+  #  log.path: /Users/chenghao/Desktop/node_test
 
 
