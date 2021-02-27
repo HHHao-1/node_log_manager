@@ -1,6 +1,6 @@
 package com.chaindigg.node_log.controller;
 
-import com.chaindigg.node_log.constant.ResponseStateEnum;
+import com.chaindigg.node_log.domain.entity.LogEntity;
 import com.chaindigg.node_log.service.ILogDataService;
 import com.chaindigg.node_log.util.ApiResponse;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,25 +20,27 @@ public class LogDataController {
   public ApiResponse save(String date) {
     try {
       logDataService.saveList(date);
-      return ApiResponse.create(ResponseStateEnum.SUCCESS, "存入hbase成功");
+      return ApiResponse.success("存入hbase成功");
     } catch (Exception e) {
       e.printStackTrace();
-      return ApiResponse.create(ResponseStateEnum.FAIL);
+      return ApiResponse.fail();
     }
   }
   
   @GetMapping("/query")
   public ApiResponse query(@RequestBody List<String> rowKeys) {
+    if (rowKeys == null && rowKeys.size() == 0) {
+      return ApiResponse.fail();
+    }
     try {
-      if (rowKeys != null) {
-        if (logDataService.batchGet(rowKeys).size() != 0) {
-          return ApiResponse.create(ResponseStateEnum.SUCCESS, logDataService.batchGet(rowKeys));
-        }
+      List<LogEntity> logEntities = logDataService.batchGet(rowKeys);
+      if (logEntities == null || logEntities.size() == 0) {
+        return ApiResponse.fail();
       }
+      return ApiResponse.success(logDataService.batchGet(rowKeys));
     } catch (Exception e) {
       e.printStackTrace();
-      return ApiResponse.create(ResponseStateEnum.FAIL);
+      return ApiResponse.fail();
     }
-    return ApiResponse.create(ResponseStateEnum.FAIL);
   }
 }

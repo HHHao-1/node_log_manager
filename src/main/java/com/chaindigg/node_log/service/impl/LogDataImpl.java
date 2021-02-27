@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -18,16 +17,18 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Scanner;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
-public class ILogDataImpl implements ILogDataService {
-
+public class LogDataImpl implements ILogDataService {
+  
   @Value("${var.log.path}")
   private String logPath;
-
-  @Resource private IHbaseService hbaseService;
-
+  
+  @Resource
+  private IHbaseService hbaseService;
+  
   @Override
   public List<LogEntity> parse(String date) throws IOException {
     List<LogEntity> logEntities = new ArrayList<>();
@@ -44,7 +45,7 @@ public class ILogDataImpl implements ILogDataService {
     }
     return logEntities;
   }
-
+  
   private List<LogEntity> fileParse(File file) throws IOException {
     List<LogEntity> logEntities = new ArrayList<>();
     Files.walkFileTree(
@@ -56,24 +57,30 @@ public class ILogDataImpl implements ILogDataService {
               throws IOException {
             if (file.toString().contains(".log")) {
               String nodeName = file.getParent().getFileName().toString();
-              try (Scanner sc = new Scanner(new FileReader(file.toString()))) {
+              //              try (Scanner sc = new Scanner(new FileReader(file.toString()))) {
+              try (Stream<String> lines = Files.lines(file)) {
                 //                for (int i = 0; i < 15; i++) {
                 //                  if (sc.hasNextLine()) {
-                while (sc.hasNextLine()) {
-                  String line = sc.nextLine();
-                  String ip = line.substring(line.indexOf("ip=") + 3, line.indexOf(","));
-                  String txid = line.substring(line.indexOf("hash=") + 5);
-                  String timestamp =
-                      line.substring(line.indexOf("receivedtime=") + 13, line.indexOf("Z,") + 1);
-                  String rowKey =
-                      txid
-                          + Constans.HBASE_ROWKEY_SPLICE
-                          + ip
-                          + Constans.HBASE_ROWKEY_SPLICE
-                          + nodeName;
-                  LogEntity logEntity = new LogEntity(rowKey, timestamp);
-                  logEntities.add(logEntity);
-                }
+                //                while (sc.hasNextLine()) {
+                lines.collect(
+                    Collectors.toMap(
+                        k -> {
+                          String ip = k.substring(k.indexOf("ip=") + 3, k.indexOf(","));
+                          String txid = k.substring(k.indexOf("hash=") + 5);
+                          return txid + Constans.ROWKEY_SPLICE + ip + Constans.ROWKEY_SPLICE + nodeName;
+                        },
+                        v -> v.substring(v.indexOf("receivedtime=") + 13, v.indexOf("Z,") + 1),
+                        (oldVal, currVal) -> oldVal))
+                    .forEach((k, v) -> logEntities.add(new LogEntity(k, v)));
+
+//                String line = sc.nextLine();
+//                String ip = line.substring(line.indexOf("ip=") + 3, line.indexOf(","));
+//                String txid = line.substring(line.indexOf("hash=") + 5);
+//                String timestamp = line.substring(line.indexOf("receivedtime=") + 13, line.indexOf("Z,") + 1);
+//                String rowKey = txid + Constans.ROWKEY_SPLICE + ip + Constans.ROWKEY_SPLICE + nodeName;
+//                LogEntity logEntity = new LogEntity(rowKey, timestamp);
+//                logEntities.add(logEntity);
+                //                }
               }
             }
             //            }
@@ -82,37 +89,44 @@ public class ILogDataImpl implements ILogDataService {
         });
     return logEntities;
   }
-
+  
   /***
    * 日志解析后数据存入hbase
    * @param date 格式例如: 2021-02-26
-   * @throws Exception
+   * @throws Exception 抛出异常
    */
   @Override
   public void saveList(String date) throws Exception {
-    List<LogEntity> logSaveList = new ArrayList<>();
-    if (date != null) {
-      List<LogEntity> logEntities = parse(date);
-      for (int i = 0; i < logEntities.size(); i++) {
-        if (getOne(logEntities.get(i).getKey()) == null) {
-          logSaveList.add(logEntities.get(i));
-        }
-      }
+//    List<LogEntity> logSaveList = new ArrayList<>();
+    if (date == null || date.equals("")) {
+      return;
     }
-    hbaseService.saveList(logSaveList);
+    List<LogEntity> logEntities = parse(date);
+//    if (date != null) {
+    List<String> rowKey = new ArrayList<>();
+//      List<LogEntity> logEntities = parse(date);
+    logEntities.forEach(s -> rowKey.add(s.getKey()));
+//      Map<String, LogEntity> existedLogData = hbaseService.batchGet(rowKey);
+    logEntities.removeAll(hbaseService.batchGet(rowKey).values());
+//      for (int i = 0; i < logEntities.size(); i++) {
+//        if (getOne(logEntities.get(i).getKey()) == null) {
+//          logSaveList.add(logEntities.get(i));
+//        }
+//      }
+//    }
+    hbaseService.saveList(logEntities);
   }
-
+  
   @Override
   public LogEntity getOne(String rowKey) throws Exception {
     return hbaseService.get(rowKey);
   }
-
+  
   @Override
   public List<LogEntity> batchGet(List<String> rowKeys) throws Exception {
-    List<LogEntity> list = hbaseService.fuzzyScan(rowKeys);
-    return list;
+    return hbaseService.fuzzyScan(rowKeys);
   }
-
+  
   @Override
   //  @Scheduled(cron = "0 0 5 * * ?")
   @Scheduled(cron = "${var.cron.date}")
