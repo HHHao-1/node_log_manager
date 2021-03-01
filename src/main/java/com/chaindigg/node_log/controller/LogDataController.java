@@ -29,7 +29,7 @@ public class LogDataController {
   
   @GetMapping("/query")
   public ApiResponse query(@RequestBody List<String> rowKeys) {
-    if (rowKeys == null && rowKeys.size() == 0) {
+    if (rowKeys == null || rowKeys.size() == 0) {
       return ApiResponse.fail();
     }
     try {
