@@ -1,6 +1,5 @@
 package com.chaindigg.node_log.service.impl;
 
-import com.chaindigg.node_log.constant.Constans;
 import com.chaindigg.node_log.domain.entity.LogEntity;
 import com.chaindigg.node_log.service.IHbaseService;
 import com.chaindigg.node_log.service.ILogDataService;
@@ -15,10 +14,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -31,17 +27,42 @@ public class LogDataImpl implements ILogDataService {
   @Value("${var.log.loop.batch}")
   private Integer batch;
   
+  @Value("${var.log.string.rowKeySplice}")
+  private String rowKeySplice;
+  
+  // region data
+  @Value("${var.log.string.txid.start}")
+  private String txidStart;
+  @Value("${var.log.string.txid.end}")
+  private String txidEnd;
+  
+  @Value("${var.log.string.ip.start}")
+  private String ipStart;
+  @Value("${var.log.string.ip.end}")
+  private String ipEnd;
+  
+  @Value("${var.log.string.time.start}")
+  private String timeStart;
+  @Value("${var.log.string.time.end}")
+  private String timeEnd;
+  
+  @Value("${var.log.string.txid.addEndIndex}")
+  private Integer txidAddEndIndex;
+  @Value("${var.log.string.ip.addEndIndex}")
+  private Integer ipAddEndIndex;
+  @Value("${var.log.string.time.addEndIndex}")
+  private Integer timeAddEndIndex;
+  // endregion
+  
   @Resource
   private IHbaseService hbaseService;
   
   @Override
   public void saveList(String date) throws IOException {
-//    List<LogEntity> logEntities = new ArrayList<>();
     if (date == null || date.equals("")) {
       return;
     }
     Path path = Paths.get(logPath);
-//    if (date != null) {
     File[] files = path.toFile().listFiles();
     if (files != null && files.length != 0) {
       for (File file : files) {
@@ -50,10 +71,8 @@ public class LogDataImpl implements ILogDataService {
         }
       }
     }
-//    }
   }
   
-  //  private List<LogEntity> fileParse(File file) throws IOException {
   private void save(File file) throws IOException {
     Files.walkFileTree(
         Paths.get(file.getPath()),
@@ -65,7 +84,6 @@ public class LogDataImpl implements ILogDataService {
             if (file.toString().contains(".log")) {
               String nodeName = file.getParent().getFileName().toString();
               log.info("node: {}, file : {}", nodeName, file.getFileName().toString());
-//              try (Stream<String> lines = Files.lines(file)) {
               try (Scanner sc = new Scanner(file)) {
                 int sum = 0;
                 while (sc.hasNextLine()) {
@@ -80,66 +98,47 @@ public class LogDataImpl implements ILogDataService {
                   lines.stream().collect(
                       Collectors.toMap(
                           k -> {
-                            String ip = k.substring(k.indexOf("ip=") + 3, k.indexOf(","));
-                            String txid = k.substring(k.indexOf("hash=") + 5);
-                            return txid + Constans.ROWKEY_SPLICE + ip + Constans.ROWKEY_SPLICE + nodeName;
+                            String ip = k.substring(k.indexOf(ipStart) + ipStart.length(),
+                                k.indexOf(ipEnd) + ipAddEndIndex);
+                            String txid = k.substring(k.indexOf(txidStart) + txidStart.length());
+                            return txid + rowKeySplice + ip + rowKeySplice + nodeName;
                           },
-                          v -> v.substring(v.indexOf("receivedtime=") + 13, v.indexOf("Z,") + 1),
+                          v -> v.substring(v.indexOf(timeStart) + timeStart.length(),
+                              v.indexOf(timeEnd) + timeAddEndIndex),
                           (oldVal, currVal) -> oldVal))
                       .forEach((k, v) -> logEntities.add(new LogEntity(k, v)));
                   List<String> rowKey =
                       logEntities.parallelStream().map(LogEntity::getKey).collect(Collectors.toList());
                   log.info("before connect hbase to batchGet");
-                  logEntities.removeAll(hbaseService.batchGet(rowKey).values());
+                  Map<String, LogEntity> stringLogEntityMap = hbaseService.batchGet(rowKey);
+                  log.info("after connect hbase to batchGet");
+                  Set<String> keys = stringLogEntityMap.keySet();
+                  log.info("before removeAll");
+                  List<LogEntity> logEntityList =
+                      logEntities.parallelStream().filter(s -> !keys.contains(s.getKey())).collect(Collectors.toList());
+//                  logEntities.removeAll(values);
                   log.info("before save to hbase");
-                  hbaseService.saveList(logEntities);
+//                  hbaseService.saveList(logEntities);
+                  hbaseService.saveList(logEntityList);
                   log.info("loop {} end", sum);
                 }
               } catch (Exception e) {
                 e.printStackTrace();
               }
-//              return FileVisitResult.TERMINATE;
             }
             return FileVisitResult.CONTINUE;
           }
         });
   }
-
-//  /***
-//   * 日志解析后数据存入hbase
-//   * @param date 格式例如: 2021-02-26
-//   * @throws Exception 抛出异常
-//   */
-//  @Override
-//  public void saveList(String date) throws Exception {
-//    if (date == null || date.equals("")) {
-//      return;
-//    }
-//    List<LogEntity> logEntities = parse(date);
-//    // List<String> rowKey = new ArrayList<>();
-//    // logEntities.forEach(s -> rowKey.add(s.getKey()));
-//    List<String> rowKey =
-//        logEntities.parallelStream().map(LogEntity::getKey).collect(Collectors.toList());
-//    log.info("before connect hbase to batchGet");
-//    log.info("equals: " + new LogEntity("123", "HHH").equals(new LogEntity("123", "HHH")));
-//    log.info("equals: " + new LogEntity("aaa", "bbb").equals(new LogEntity("aaa", "HHH")));
-//    log.info("equals: " + new LogEntity("aaa", "bbb").equals(new LogEntity("ccc", "HHH")));
-////    logEntities.removeAll(hbaseService.batchGet(rowKey).values());
-////    log.info("before save to hbase");
-////    hbaseService.saveList(logEntities);
-////    log.info("after save to hbase");
-//  }
   
   @Override
   public LogEntity getOne(String rowKey) throws Exception {
     return hbaseService.get(rowKey);
-//    return null;
   }
   
   @Override
   public List<LogEntity> batchGet(List<String> rowKeys) throws Exception {
     return hbaseService.fuzzyScan(rowKeys);
-//    return null;
   }
   
   @Override
