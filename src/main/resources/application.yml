@@ -27,5 +27,5 @@ var:
   cron.date: '0 0 5 * * ?'
   #  cron.date: '* * * * * ?'
   log.path: /Users/chenghao/Desktop/node_test
-
+  log.loop.batch: 100
 
