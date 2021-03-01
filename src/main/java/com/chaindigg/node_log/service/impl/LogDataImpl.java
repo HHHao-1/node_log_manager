@@ -20,32 +20,32 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class LogDataImpl implements ILogDataService {
-  
+
   @Value("${var.log.path}")
   private String logPath;
-  
+
   @Value("${var.log.loop.batch}")
   private Integer batch;
-  
+
   @Value("${var.log.string.rowKeySplice}")
   private String rowKeySplice;
-  
+
   // region data
   @Value("${var.log.string.txid.start}")
   private String txidStart;
   @Value("${var.log.string.txid.end}")
   private String txidEnd;
-  
+
   @Value("${var.log.string.ip.start}")
   private String ipStart;
   @Value("${var.log.string.ip.end}")
   private String ipEnd;
-  
+
   @Value("${var.log.string.time.start}")
   private String timeStart;
   @Value("${var.log.string.time.end}")
   private String timeEnd;
-  
+
   @Value("${var.log.string.txid.addEndIndex}")
   private Integer txidAddEndIndex;
   @Value("${var.log.string.ip.addEndIndex}")
@@ -53,10 +53,10 @@ public class LogDataImpl implements ILogDataService {
   @Value("${var.log.string.time.addEndIndex}")
   private Integer timeAddEndIndex;
   // endregion
-  
+
   @Resource
   private IHbaseService hbaseService;
-  
+
   @Override
   public void saveList(String date) throws IOException {
     if (date == null || date.equals("")) {
@@ -72,7 +72,7 @@ public class LogDataImpl implements ILogDataService {
       }
     }
   }
-  
+
   private void save(File file) throws IOException {
     Files.walkFileTree(
         Paths.get(file.getPath()),
@@ -109,7 +109,7 @@ public class LogDataImpl implements ILogDataService {
                       .forEach((k, v) -> logEntities.add(new LogEntity(k, v)));
                   List<String> rowKey =
                       logEntities.parallelStream().map(LogEntity::getKey).collect(Collectors.toList());
-                  log.info("before connect hbase to batchGet");
+                  log.info("before connect hbase to batchGet,total = {}",rowKey.size());
                   Map<String, LogEntity> stringLogEntityMap = hbaseService.batchGet(rowKey);
                   log.info("after connect hbase to batchGet");
                   Set<String> keys = stringLogEntityMap.keySet();
@@ -130,17 +130,17 @@ public class LogDataImpl implements ILogDataService {
           }
         });
   }
-  
+
   @Override
   public LogEntity getOne(String rowKey) throws Exception {
     return hbaseService.get(rowKey);
   }
-  
+
   @Override
   public List<LogEntity> batchGet(List<String> rowKeys) throws Exception {
     return hbaseService.fuzzyScan(rowKeys);
   }
-  
+
   @Override
   //  @Scheduled(cron = "0 0 5 * * ?")
   @Scheduled(cron = "${var.cron.date}")
