@@ -24,13 +24,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class LogDataImpl implements ILogDataService {
-  
+
   @Value("${var.log.path}")
   private String logPath;
-  
+
   @Resource
   private IHbaseService hbaseService;
-  
+
   @Override
   public List<LogEntity> parse(String date) throws IOException {
     List<LogEntity> logEntities = new ArrayList<>();
@@ -47,7 +47,7 @@ public class LogDataImpl implements ILogDataService {
     }
     return logEntities;
   }
-  
+
   private List<LogEntity> fileParse(File file) throws IOException {
     List<LogEntity> logEntities = new ArrayList<>();
     Files.walkFileTree(
@@ -90,7 +90,7 @@ public class LogDataImpl implements ILogDataService {
         });
     return logEntities;
   }
-  
+
   /***
    * 日志解析后数据存入hbase
    * @param date 格式例如: 2021-02-26
@@ -102,24 +102,27 @@ public class LogDataImpl implements ILogDataService {
       return;
     }
     List<LogEntity> logEntities = parse(date);
-    List<String> rowKey = new ArrayList<>();
-    logEntities.forEach(s -> rowKey.add(s.getKey()));
+    // List<String> rowKey = new ArrayList<>();
+    // logEntities.forEach(s -> rowKey.add(s.getKey()));
+    List<String> rowKey =
+        logEntities.parallelStream().map(LogEntity::getKey).collect(Collectors.toList());
+
     logEntities.removeAll(hbaseService.batchGet(rowKey).values());
     log.info("before save to hbase");
     hbaseService.saveList(logEntities);
     log.info("after save to hbase");
   }
-  
+
   @Override
   public LogEntity getOne(String rowKey) throws Exception {
     return hbaseService.get(rowKey);
   }
-  
+
   @Override
   public List<LogEntity> batchGet(List<String> rowKeys) throws Exception {
     return hbaseService.fuzzyScan(rowKeys);
   }
-  
+
   @Override
   //  @Scheduled(cron = "0 0 5 * * ?")
   @Scheduled(cron = "${var.cron.date}")
