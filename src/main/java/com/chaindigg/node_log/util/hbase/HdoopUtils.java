@@ -292,8 +292,8 @@ public class HdoopUtils {
 			conn = hbaseUtils.getConnection();
 		}
 
-		// StopWatch watch = new StopWatch();
-		// watch.start();
+		StopWatch watch = new StopWatch();
+		watch.start();
 
 		try (Table table = conn.getTable(TableName.valueOf(tableName))) {
 
@@ -330,10 +330,10 @@ public class HdoopUtils {
 				}
 			}).collect(Collectors.toList());
 
-			// watch.stop();
-			// log.info("HBase parallel get {} from {} used {}", rowkeys.size(), tableName, watch);
-			// watch.reset();
-			// watch.start();
+			watch.stop();
+			log.info("HBase parallel get {} from {} used {}", rowkeys.size(), tableName, watch);
+			watch.reset();
+			watch.start();
 			List<Map<String, T>> mapList = resultsList.parallelStream().map(rs -> {
 				try {
 					return getResult2Map(rs, z);
@@ -347,7 +347,7 @@ public class HdoopUtils {
 				resultMap.putAll(map);
 			}
 
-			// log.info("HBase results list {} to map used {}", resultMap.size(), watch);
+			log.info("HBase results list {} to map used {}", resultMap.size(), watch);
 			return resultMap;
 		} catch (IOException e) {
 			log.error("hbase get error, wait retry...", e);
