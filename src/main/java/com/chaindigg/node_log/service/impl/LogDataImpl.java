@@ -76,15 +76,17 @@ public class LogDataImpl implements ILogDataService {
   }
   
   private void save(File file) throws IOException {
+    final int[] count = {0};
     Files.walkFileTree(
         Paths.get(file.getPath()),
         new SimpleFileVisitor<Path>() {
           @Override
           public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
             if (file.toString().contains(".log")) {
+              count[0]++;
               String nodeName = file.getParent().getFileName().toString();
               log.info("node: {}, file : {}", nodeName, file.getFileName().toString());
-              log.info("=============================================================");
+              log.info("==============================  file number {}  ==============================", count);
               try (Scanner sc = new Scanner(file)) {
                 int sum = 0;
                 int flag = 0;
