@@ -21,13 +21,16 @@ import java.util.stream.Collectors;
 @Service
 public class LogDataImpl implements ILogDataService {
   
+  @Value("${var.cron.run}")
+  private Boolean run;
+  
   @Value("${var.log.path}")
   private String logPath;
   
-  @Value("${var.log.loop.batch}")
+  @Value("${var.loop.batch}")
   private Integer batch;
   
-  @Value("${var.log.string.rowKeySplice}")
+  @Value("${var.rowkey.splice}")
   private String rowKeySplice;
   
   // region data
@@ -150,8 +153,9 @@ public class LogDataImpl implements ILogDataService {
                     },
                     (oldVal, currVal) -> oldVal))
                 .forEach((k, v) -> {
-                  if (!Objects.equals(k, "rowKeyError") || !Objects.equals(v, "valueError"))
+                  if (!Objects.equals(k, "rowKeyError") || !Objects.equals(v, "valueError")) {
                     logEntities.add(new LogEntity(k, v));
+                  }
                 });
           }
         });
@@ -171,6 +175,7 @@ public class LogDataImpl implements ILogDataService {
   //  @Scheduled(cron = "0 0 5 * * ?")
   @Scheduled(cron = "${var.cron.date}")
   public void schedule() {
+    if (!run) return;
     log.info("log save to hbase,star...");
     try {
       LocalDateTime date = LocalDateTime.now().minusDays(1);
