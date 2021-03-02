@@ -33,7 +33,7 @@ public class LogDataImpl implements ILogDataService {
   @Value("${var.rowkey.splice}")
   private String rowKeySplice;
   
-  // region data
+  // region data match
   @Value("${var.log.string.txid.start}")
   private String txidStart;
   
@@ -84,6 +84,7 @@ public class LogDataImpl implements ILogDataService {
             if (file.toString().contains(".log")) {
               String nodeName = file.getParent().getFileName().toString();
               log.info("node: {}, file : {}", nodeName, file.getFileName().toString());
+              log.info("=============================================================");
               try (Scanner sc = new Scanner(file)) {
                 int sum = 0;
                 int flag = 0;
