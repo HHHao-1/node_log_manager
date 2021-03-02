@@ -31,12 +31,10 @@ var:
   rowkey.splice: ','
   #  每行数据匹配，start
   log.string.txid.start: 'hash='
-  log.string.txid.end:
   log.string.ip.start: 'ip='
   log.string.ip.end: ','
   log.string.time.start: 'receivedtime='
   log.string.time.end: 'Z,'
   log.string.ip.addEndIndex: 0
-  log.string.txid.addEndIndex: 0
   log.string.time.addEndIndex: 0
   #  每行数据匹配，end

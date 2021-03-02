@@ -36,8 +36,6 @@ public class LogDataImpl implements ILogDataService {
   // region data
   @Value("${var.log.string.txid.start}")
   private String txidStart;
-  @Value("${var.log.string.txid.end}")
-  private String txidEnd;
   
   @Value("${var.log.string.ip.start}")
   private String ipStart;
@@ -49,8 +47,6 @@ public class LogDataImpl implements ILogDataService {
   @Value("${var.log.string.time.end}")
   private String timeEnd;
   
-  @Value("${var.log.string.txid.addEndIndex}")
-  private Integer txidAddEndIndex;
   @Value("${var.log.string.ip.addEndIndex}")
   private Integer ipAddEndIndex;
   @Value("${var.log.string.time.addEndIndex}")
@@ -93,10 +89,9 @@ public class LogDataImpl implements ILogDataService {
                 int flag = 0;
                 while (sc.hasNextLine()) {
                   flag++;
-                  sum++;
-                  log.info("loop {} start...,batch: {}", sum, batch);
                   lines.add(sc.nextLine());
                   if (flag > batch || !sc.hasNextLine()) {
+                    sum++;
                     buildDataToHbase(nodeName);
                     matchSave(sum);
                     flag = 0;
@@ -110,53 +105,54 @@ public class LogDataImpl implements ILogDataService {
             }
             return FileVisitResult.CONTINUE;
           }
-          
-          private void matchSave(int sum) throws Exception {
-            List<String> rowKey =
-                logEntities.parallelStream().map(LogEntity::getKey).collect(Collectors.toList());
-            log.info("before connect hbase to batchGet,total = {}", rowKey.size());
-            Map<String, LogEntity> stringLogEntityMap = hbaseService.batchGet(rowKey);
-            log.info("after connect hbase to batchGet");
-            Set<String> keys = stringLogEntityMap.keySet();
-            log.info("before removeAll");
-            List<LogEntity> logEntityList =
-                logEntities.parallelStream().filter(s -> !keys.contains(s.getKey())).collect(Collectors.toList());
-            log.info("before save to hbase");
-            hbaseService.saveList(logEntityList);
-            log.info("loop {} end", sum);
-          }
-          
-          private void buildDataToHbase(String nodeName) {
-            lines.stream().collect(
-                Collectors.toMap(
-                    k -> {
-                      try {
-                        String ip = k.substring(k.indexOf(ipStart) + ipStart.length(),
-                            k.indexOf(ipEnd) + ipAddEndIndex);
-                        String txid = k.substring(k.indexOf(txidStart) + txidStart.length());
-                        return txid + rowKeySplice + ip + rowKeySplice + nodeName;
-                      } catch (Exception e) {
-                        e.printStackTrace();
-                        log.info("hbase---rowKey字符串构造异常");
-                        return "rowKeyError";
-                      }
-                    },
-                    v -> {
-                      try {
-                        return v.substring(v.indexOf(timeStart) + timeStart.length(),
-                            v.indexOf(timeEnd) + timeAddEndIndex);
-                      } catch (Exception e) {
-                        e.printStackTrace();
-                        log.info("hbase--value字符串构造异常");
-                        return "valueError";
-                      }
-                    },
-                    (oldVal, currVal) -> oldVal))
-                .forEach((k, v) -> {
-                  if (!Objects.equals(k, "rowKeyError") || !Objects.equals(v, "valueError")) {
-                    logEntities.add(new LogEntity(k, v));
-                  }
-                });
+        });
+  }
+  
+  private void matchSave(int sum) throws Exception {
+    log.info("loop {} start...,batch: {}", sum, batch);
+    List<String> rowKey =
+        logEntities.parallelStream().map(LogEntity::getKey).collect(Collectors.toList());
+    log.info("before connect hbase to batchGet,total = {}", rowKey.size());
+    Map<String, LogEntity> stringLogEntityMap = hbaseService.batchGet(rowKey);
+    log.info("after connect hbase to batchGet");
+    Set<String> keys = stringLogEntityMap.keySet();
+    log.info("before removeAll");
+    List<LogEntity> logEntityList =
+        logEntities.parallelStream().filter(s -> !keys.contains(s.getKey())).collect(Collectors.toList());
+    log.info("before save to hbase");
+    hbaseService.saveList(logEntityList);
+    log.info("loop {} end", sum);
+  }
+  
+  private void buildDataToHbase(String nodeName) {
+    lines.stream().collect(
+        Collectors.toMap(
+            k -> {
+              try {
+                String ip = k.substring(k.indexOf(ipStart) + ipStart.length(),
+                    k.indexOf(ipEnd) + ipAddEndIndex);
+                String txid = k.substring(k.indexOf(txidStart) + txidStart.length());
+                return txid + rowKeySplice + ip + rowKeySplice + nodeName;
+              } catch (Exception e) {
+                e.printStackTrace();
+                log.info("hbase---rowKey字符串构造异常");
+                return "rowKeyError";
+              }
+            },
+            v -> {
+              try {
+                return v.substring(v.indexOf(timeStart) + timeStart.length(),
+                    v.indexOf(timeEnd) + timeAddEndIndex);
+              } catch (Exception e) {
+                e.printStackTrace();
+                log.info("hbase--value字符串构造异常");
+                return "valueError";
+              }
+            },
+            (oldVal, currVal) -> oldVal))
+        .forEach((k, v) -> {
+          if (!Objects.equals(k, "rowKeyError") || !Objects.equals(v, "valueError")) {
+            logEntities.add(new LogEntity(k, v));
           }
         });
   }
