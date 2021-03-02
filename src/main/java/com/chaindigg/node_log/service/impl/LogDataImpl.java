@@ -90,7 +90,7 @@ public class LogDataImpl implements ILogDataService {
                 while (sc.hasNextLine()) {
                   flag++;
                   lines.add(sc.nextLine());
-                  if (flag > batch || !sc.hasNextLine()) {
+                  if (flag >= batch || !sc.hasNextLine()) {
                     sum++;
                     buildDataToHbase(nodeName);
                     matchSave(sum);
