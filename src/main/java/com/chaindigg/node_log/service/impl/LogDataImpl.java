@@ -166,8 +166,19 @@ public class LogDataImpl implements ILogDataService {
   }
   
   @Override
-  public List<LogEntity> batchGet(List<String> rowKeys) throws Exception {
-    return hbaseService.fuzzyScan(rowKeys);
+  public List<List<String>> batchGet(List<String> rowKeys) throws Exception {
+    log.info("query from hbase , start...");
+    List<LogEntity> list = hbaseService.fuzzyScan(rowKeys);
+    log.info("query end");
+    log.info("data deal , start...");
+    List<List<String>> returnData = new ArrayList<>();
+    list.parallelStream().forEach(s -> {
+      List<String> fields = Arrays.stream(s.getKey().split(",")).collect(Collectors.toList());
+      fields.add(s.getTimestamp());
+      returnData.add(fields);
+    });
+    log.info("data deal end");
+    return returnData;
   }
   
   @Override

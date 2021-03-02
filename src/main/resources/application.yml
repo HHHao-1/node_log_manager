@@ -19,7 +19,7 @@ hbase:
 
 data:
   family: log
-  table: chenghao_ip_log
+  table: chenghao_ip_log2
   putSize: 100
 
 var:

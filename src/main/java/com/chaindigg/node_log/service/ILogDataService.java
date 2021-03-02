@@ -11,7 +11,7 @@ public interface ILogDataService {
   
   LogEntity getOne(String rowKey) throws Exception;
   
-  List<LogEntity> batchGet(List<String> rowKeys) throws Exception;
+  List<List<String>> batchGet(List<String> rowKeys) throws Exception;
   
   void schedule();
 }

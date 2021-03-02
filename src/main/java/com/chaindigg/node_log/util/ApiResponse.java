@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 public class ApiResponse {
   
-  private Integer code;
+  private String code;
   private String msg;
   private Object data;
   

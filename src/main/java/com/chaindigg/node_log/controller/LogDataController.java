@@ -1,6 +1,5 @@
 package com.chaindigg.node_log.controller;
 
-import com.chaindigg.node_log.domain.entity.LogEntity;
 import com.chaindigg.node_log.service.ILogDataService;
 import com.chaindigg.node_log.util.ApiResponse;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,11 +32,11 @@ public class LogDataController {
       return ApiResponse.fail();
     }
     try {
-      List<LogEntity> logEntities = logDataService.batchGet(rowKeys);
+      List<List<String>> logEntities = logDataService.batchGet(rowKeys);
       if (logEntities == null || logEntities.size() == 0) {
         return ApiResponse.fail();
       }
-      return ApiResponse.success(logDataService.batchGet(rowKeys));
+      return ApiResponse.success(logEntities);
     } catch (Exception e) {
       e.printStackTrace();
       return ApiResponse.fail();
