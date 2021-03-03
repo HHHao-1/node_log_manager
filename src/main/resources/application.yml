@@ -23,11 +23,11 @@ data:
   putSize: 100
 
 var:
-  log.path: /Users/chenghao/Desktop/log_test
-  #  log.path: /Users/chenghao/Desktop/node_test
+  #  log.path: /Users/chenghao/Desktop/log_test
+  log.path: /Users/chenghao/Desktop/node_test
   cron.date: '0 0 5 * * ?'
   cron.run: true
-  loop.batch: 100
+  loop.batch: 100000
   rowkey.splice: ','
   #  每行数据匹配，start
   log.string.txid.start: 'hash='

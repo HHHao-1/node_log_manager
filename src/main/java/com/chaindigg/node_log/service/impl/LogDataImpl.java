@@ -4,6 +4,8 @@ import com.chaindigg.node_log.domain.entity.LogEntity;
 import com.chaindigg.node_log.service.IHbaseService;
 import com.chaindigg.node_log.service.ILogDataService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.LineIterator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -86,14 +88,14 @@ public class LogDataImpl implements ILogDataService {
               count[0]++;
               String nodeName = file.getParent().getFileName().toString();
               log.info("node: {}, file : {}", nodeName, file.getFileName().toString());
-              log.info("==============================  file number {}  ==============================", count);
-              try (Scanner sc = new Scanner(file)) {
+              log.info("===========================  file number {}  ===========================", count);
+              try (LineIterator it = FileUtils.lineIterator(file.toFile())) {
                 int sum = 0;
                 int flag = 0;
-                while (sc.hasNextLine()) {
+                while (it.hasNext()) {
                   flag++;
-                  lines.add(sc.nextLine());
-                  if (flag >= batch || !sc.hasNextLine()) {
+                  lines.add(it.nextLine());
+                  if (flag >= batch || !it.hasNext()) {
                     sum++;
                     buildDataToHbase(nodeName);
                     matchSave(sum);
