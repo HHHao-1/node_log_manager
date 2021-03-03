@@ -2,7 +2,6 @@ package com.chaindigg.node_log.controller;
 
 import com.chaindigg.node_log.service.ILogDataService;
 import com.chaindigg.node_log.util.ApiResponse;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,7 +25,7 @@ public class LogDataController {
     }
   }
   
-  @GetMapping("/query")
+  @PostMapping("/query")
   public ApiResponse query(@RequestBody List<String> rowKeys) {
     if (rowKeys == null || rowKeys.size() == 0) {
       return ApiResponse.fail();
